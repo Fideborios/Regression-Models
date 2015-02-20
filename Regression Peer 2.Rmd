@@ -1,0 +1,97 @@
+---
+title: "Peer2"
+author: "Fideborios"
+date: "Friday, February 20, 2015"
+output: html_document
+---
+
+First of all we are loading the necessary library 'Knitr'
+
+```{r,eval=FALSE,message=FALSE}
+library(knitr)
+
+```
+
+Second step is loading the data
+```{r}
+data(mtcars)
+```
+Lets take a look
+```{r}
+head(mtcars)
+
+levels(mtcars$am)= c("Auto", "Manual")
+
+```
+
+
+Our concern is if automatic transmission consumps more fuel than manual or the opposite.
+
+```{r, echo=FALSE}
+boxplot(mpg ~ am,
+      range= 50,
+      data = mtcars, 
+      main = "Mpg by transmission type", 
+      xlab = "Transmission type",
+      ylab = "Miles per gallon")
+```
+
+##### As we can see in the above Boxplot the manual transmission consumes fewer fuel
+
+Lets observe the statistical difference.
+A good way to compare 2 means is the t-test
+```{r}
+with(mtcars, t.test(mpg[am == 0], mpg[am == 1]))
+```
+###### The means of mpg is 17.14737 for manual and 24.39231 for automatic transmissions. The differnce = -3.7671 that leads to p-value = 0.001374 indicating statistical significance to 95% level of significance.
+
+Next step is to have a linear model with the am variable only
+```{r, echo=FALSE}
+lm(mpg ~ am ,data=mtcars)
+```
+
+Now we can interpret our results the automatic transmission cars travel  7.245 miles per galon more than the manual transmission cars.
+
+```{r, echo=FALSE}
+lm(mpg ~ cyl + disp+ hp+ drat +wt +qsec +am +gear +carb ,data=mtcars)
+```
+When we insert all the variables we observe that the coefficient lowers. This means that there are highly correlated other variables that can explain the variability of the mpg
+
+```{r}
+cor(mtcars[1:8],mtcars$am, use = "everything",
+    method = "spearman")
+```
+As we can see there are many high correlations.
+
+Using a Stepwise Regression
+```{r, results='hide'}
+model.all = lm(mpg ~ ., data = mtcars)
+n = nrow(mtcars)
+
+model = step(model.all, 
+             direction ="both",  # other choices "both" , "forward" # 
+             k = log(n) ) #(AIC = - 2*log L + k*df) if k=2 AIC, if k=log(n) BIC#  
+
+```
+
+We find the best fitting model.
+
+```{r}
+summary(model)
+```
+
+We can write it as : 
+######MPG= 9.6178 -3.9165*wt +  1.2259*qsec + 2.9358*am
+
+Now the interpretation is that the automatic transimissioned cars travel 2.9358 more miles per galon than the manual.
+
+Finally we check the fitness of the model
+```{r}
+mean(model$residuals)
+```
+the mean of the reiduals is almost equal to zero and seem to be randomly distributed
+```{r}
+plot(resid(model))
+abline(0,0)
+```
+
